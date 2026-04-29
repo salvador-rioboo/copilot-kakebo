@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kakebo - Personal Finance Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <nav class="bg-blue-600 text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">Kakebo Finance</h1>
+            <ul class="flex space-x-6">
+                <li><a href="/" class="hover:text-blue-200">Home</a></li>
+                <li><a href="/expenses" class="hover:text-blue-200">Expenses</a></li>
+                <li><a href="/incomes" class="hover:text-blue-200">Income</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-4">
+        <!-- Monthly Summary Section -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-3xl font-bold mb-6">Monthly Summary</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <!-- Total Income Card -->
+                <div class="bg-green-50 border-l-4 border-green-600 p-4">
+                    <h3 class="text-gray-600 text-sm font-semibold">Total Income</h3>
+                    <p class="text-2xl font-bold text-green-600">$2,500.00</p>
+                </div>
+
+                <!-- Total Expenses Card -->
+                <div class="bg-red-50 border-l-4 border-red-600 p-4">
+                    <h3 class="text-gray-600 text-sm font-semibold">Total Expenses</h3>
+                    <p class="text-2xl font-bold text-red-600">$1,250.00</p>
+                </div>
+
+                <!-- Available Money Card -->
+                <div class="bg-blue-50 border-l-4 border-blue-600 p-4">
+                    <h3 class="text-gray-600 text-sm font-semibold">Available Money</h3>
+                    <p class="text-2xl font-bold text-blue-600">$1,250.00</p>
+                </div>
+            </div>
+
+            <!-- Savings Section -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-gray-50 p-4 rounded">
+                    <h3 class="text-gray-600 text-sm font-semibold">Planned Savings</h3>
+                    <p class="text-xl font-bold">$500.00</p>
+                    <p class="text-gray-500 text-sm">20% of income</p>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded">
+                    <h3 class="text-gray-600 text-sm font-semibold">Actual Savings</h3>
+                    <p class="text-xl font-bold text-green-600">$1,250.00</p>
+                    <p class="text-gray-500 text-sm">After expenses</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expenses by Category -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h3 class="text-2xl font-bold mb-4">Expenses by Category</h3>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                    <span class="font-semibold">Survival (Food, Transport)</span>
+                    <span class="text-red-600 font-bold">$450.00</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                    <span class="font-semibold">Entertainment</span>
+                    <span class="text-red-600 font-bold">$300.00</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                    <span class="font-semibold">Culture & Education</span>
+                    <span class="text-red-600 font-bold">$150.00</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                    <span class="font-semibold">Extras & Unexpected</span>
+                    <span class="text-red-600 font-bold">$350.00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex space-x-4">
+            <a href="/expenses" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold">
+                Add Expense
+            </a>
+            <a href="/incomes" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-semibold">
+                Add Income
+            </a>
+        </div>
+    </div>
+</body>
+</html>

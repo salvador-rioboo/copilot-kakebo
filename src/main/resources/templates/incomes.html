@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Income - Kakebo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <nav class="bg-blue-600 text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">Kakebo Finance</h1>
+            <ul class="flex space-x-6">
+                <li><a href="/" class="hover:text-blue-200">Home</a></li>
+                <li><a href="/expenses" class="hover:text-blue-200">Expenses</a></li>
+                <li><a href="/incomes" class="hover:text-blue-200">Income</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-4">
+        <h2 class="text-3xl font-bold mb-6">Income</h2>
+
+        <!-- Add Income Form -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h3 class="text-xl font-bold mb-4">Add New Income</h3>
+            <form id="incomeForm" action="/api/incomes" method="POST" class="space-y-4">
+                <div>
+                    <label for="description" class="block font-semibold mb-2">Description <span class="text-red-600">*</span></label>
+                    <input type="text" id="description" name="description" minlength="3" maxlength="100" required
+                           class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 transition"
+                           placeholder="e.g., Monthly Salary">
+                    <p id="descriptionError" class="text-red-600 text-sm mt-1 hidden"></p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="amount" class="block font-semibold mb-2">Amount <span class="text-red-600">*</span></label>
+                        <input type="number" id="amount" name="amount" step="0.01" min="0.01" required
+                               class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 transition"
+                               placeholder="0.00">
+                        <p id="amountError" class="text-red-600 text-sm mt-1 hidden"></p>
+                    </div>
+
+                    <div>
+                        <label for="type" class="block font-semibold mb-2">Income Type <span class="text-red-600">*</span></label>
+                        <select id="type" name="type" required
+                                class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 transition">
+                            <option value="">Select type</option>
+                            <option value="PRINCIPAL">Principal (Salary)</option>
+                            <option value="EXTRA">Extra (Freelance, Gifts, Refunds)</option>
+                        </select>
+                        <p id="typeError" class="text-red-600 text-sm mt-1 hidden"></p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <input type="checkbox" id="isRecurring" name="isRecurring" class="rounded cursor-pointer">
+                    <label for="isRecurring" class="font-semibold cursor-pointer">Recurring Income</label>
+                </div>
+
+                <div>
+                    <label for="date" class="block font-semibold mb-2">Date <span class="text-red-600">*</span></label>
+                    <input type="date" id="date" name="date" required
+                           class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 transition">
+                    <p id="dateError" class="text-red-600 text-sm mt-1 hidden"></p>
+                </div>
+
+                <button type="submit" id="submitBtn" class="w-full bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 font-semibold transition disabled:bg-gray-400 disabled:cursor-not-allowed">
+                    Add Income
+                </button>
+            </form>
+        </div>
+
+        <!-- Income List -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-xl font-bold mb-4">Recent Income</h3>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center p-4 border-l-4 border-green-600 bg-gray-50">
+                    <div>
+                        <p class="font-semibold">Monthly Salary</p>
+                        <p class="text-sm text-gray-500">Principal (Recurring) - 2026-04-01</p>
+                    </div>
+                    <span class="text-green-600 font-bold">$2,500.00</span>
+                </div>
+
+                <div class="flex justify-between items-center p-4 border-l-4 border-blue-600 bg-gray-50">
+                    <div>
+                        <p class="font-semibold">Freelance Project</p>
+                        <p class="text-sm text-gray-500">Extra - 2026-04-15</p>
+                    </div>
+                    <span class="text-green-600 font-bold">$300.00</span>
+                </div>
+
+                <div class="flex justify-between items-center p-4 border-l-4 border-purple-600 bg-gray-50">
+                    <div>
+                        <p class="font-semibold">Gift</p>
+                        <p class="text-sm text-gray-500">Extra - 2026-04-20</p>
+                    </div>
+                    <span class="text-green-600 font-bold">$100.00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-6">
+            <a href="/" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 font-semibold">
+                Back to Home
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Form validation for income
+        const form = document.getElementById('incomeForm');
+        const descriptionInput = document.getElementById('description');
+        const amountInput = document.getElementById('amount');
+        const typeInput = document.getElementById('type');
+        const dateInput = document.getElementById('date');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // Validation rules
+        const validations = {
+            description: (value) => {
+                const trimmed = value.trim();
+                if (!trimmed) return 'Description is required';
+                if (trimmed.length < 3) return 'Description must be at least 3 characters';
+                if (trimmed.length > 100) return 'Description must not exceed 100 characters';
+                return null;
+            },
+            amount: (value) => {
+                const num = parseFloat(value);
+                if (!value) return 'Amount is required';
+                if (isNaN(num)) return 'Amount must be a valid number';
+                if (num <= 0) return 'Amount must be greater than 0';
+                return null;
+            },
+            type: (value) => {
+                if (!value) return 'Income type is required';
+                return null;
+            },
+            date: (value) => {
+                if (!value) return 'Date is required';
+                const selectedDate = new Date(value);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                if (selectedDate > today) return 'Date cannot be in the future';
+                const oneYearAgo = new Date();
+                oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+                if (selectedDate < oneYearAgo) return 'Date cannot be more than 1 year in the past';
+                return null;
+            }
+        };
+
+        // Function to show error
+        function showError(fieldName, error) {
+            const errorEl = document.getElementById(fieldName + 'Error');
+            const inputEl = document.getElementById(fieldName);
+            if (error) {
+                errorEl.textContent = error;
+                errorEl.classList.remove('hidden');
+                inputEl.classList.add('border-red-600');
+                inputEl.classList.remove('border-gray-300');
+            } else {
+                errorEl.classList.add('hidden');
+                inputEl.classList.remove('border-red-600');
+                inputEl.classList.add('border-gray-300');
+            }
+        }
+
+        // Function to validate all fields
+        function validateForm() {
+            let isValid = true;
+            Object.keys(validations).forEach(fieldName => {
+                const input = document.getElementById(fieldName);
+                const error = validations[fieldName](input.value);
+                showError(fieldName, error);
+                if (error) isValid = false;
+            });
+            submitBtn.disabled = !isValid;
+            return isValid;
+        }
+
+        // Real-time validation
+        descriptionInput.addEventListener('blur', () => {
+            showError('description', validations.description(descriptionInput.value));
+            validateForm();
+        });
+
+        amountInput.addEventListener('blur', () => {
+            showError('amount', validations.amount(amountInput.value));
+            validateForm();
+        });
+
+        typeInput.addEventListener('change', () => {
+            showError('type', validations.type(typeInput.value));
+            validateForm();
+        });
+
+        dateInput.addEventListener('blur', () => {
+            showError('date', validations.date(dateInput.value));
+            validateForm();
+        });
+
+        // Form submit
+        form.addEventListener('submit', (e) => {
+            if (!validateForm()) {
+                e.preventDefault();
+                alert('Please fix the errors before submitting');
+            }
+        });
+
+        // Set today's date as default
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+        dateInput.max = today;
+    </script>
+</body>
+</html>
