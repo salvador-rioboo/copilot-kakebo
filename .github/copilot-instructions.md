@@ -1,208 +1,208 @@
-# Instrucciones para GitHub Copilot - Kakebo Finance
+# GitHub Copilot Instructions - Kakebo Finance
 
-## Visión General del Proyecto
+## Project Overview
 
-**Kakebo** es una aplicación de gestión de gastos personales basada en el método japonés homónimo.
-- **Stack**: Java 25 + Spring Boot + Thymeleaf + Tailwind CSS + H2 (BD embebida)
-- **Arquitectura**: REST API + Frontend MVC
-- **Objetivo**: Proporcionar gestión de ingresos, gastos fijos/variables y ahorro con visualización clara
+**Kakebo** is a personal expense management application based on the Japanese method of the same name.
+- **Stack**: Java 25 + Spring Boot + Thymeleaf + Tailwind CSS + H2 (embedded DB)
+- **Architecture**: REST API + Frontend MVC
+- **Objective**: Provide income management, fixed/variable expenses and savings with clear visualization
 
 ---
 
-## Principios SOLID
+## SOLID Principles
 
 ### 1. Single Responsibility Principle (SRP)
-- Cada clase tiene UNA responsabilidad única y bien definida
-- **Separación de capas**:
-  - `Controller`: Manejo de HTTP y validación de entrada
-  - `Service`: Lógica de negocio pura
-  - `Repository`: Acceso a datos (Spring Data JPA)
-  - `Entity`: Mapeo a base de datos
-  - `DTO`: Transferencia de datos entre capas
+- Each class has ONE unique and well-defined responsibility
+- **Layer separation**:
+  - `Controller`: HTTP handling and input validation
+  - `Service`: Pure business logic
+  - `Repository`: Data access (Spring Data JPA)
+  - `Entity`: Database mapping
+  - `DTO`: Data transfer between layers
 
-**Ejemplo**: `GastoService` solo maneja lógica de gastos, no persistencia ni HTTP.
+**Example**: `ExpenseService` only handles expense logic, not persistence or HTTP.
 
 ### 2. Open/Closed Principle (OCP)
-- Clases abiertas para extensión, cerradas para modificación
-- **Usar interfaces y abstracciones** para componentes que pueden variar:
-  - `CalculadoraAhorroStrategy` para diferentes estrategias de cálculo
-  - `NotificadorAlerta` para diferentes canales de notificación
-- Nuevas categorías de gastos = configuración, no código
+- Classes open for extension, closed for modification
+- **Use interfaces and abstractions** for components that may vary:
+  - `SavingsCalculatorStrategy` for different calculation strategies
+  - `AlertNotifier` for different notification channels
+- New expense categories = configuration, not code
 
 ### 3. Liskov Substitution Principle (LSP)
-- Subclases pueden reemplazar a sus clases padre sin romper funcionalidad
-- Si usas `List<Gasto>` con gastos fijos y variables: ambos deben cumplir el contrato
+- Subclasses can replace their parent classes without breaking functionality
+- If you use `List<Expense>` with fixed and variable expenses: both must fulfill the contract
 
 ### 4. Interface Segregation Principle (ISP)
-- Interfaces específicas, no monolíticas
-- ❌ `IGastoManager` que todo lo hace
-- ✅ `ICreadorGasto`, `IBuscadorGasto`, `IActualizadorGasto` separadas
+- Specific interfaces, not monolithic
+- ❌ `IExpenseManager` that does everything
+- ✅ `IExpenseCreator`, `IExpenseFinder`, `IExpenseUpdater` separated
 
 ### 5. Dependency Injection Principle (DIP)
-- Inyección mediante **Spring `@Autowired`, `@Service`, `@Repository`**
-- Nunca instanciar servicios directamente: `new GastoService()` ❌
-- Testabilidad: usar `@MockBean` en tests
+- Injection via **Spring `@Autowired`, `@Service`, `@Repository`**
+- Never instantiate services directly: `new ExpenseService()` ❌
+- Testability: use `@MockBean` in tests
 
 ---
 
-## Buenas Prácticas de Código
+## Code Best Practices
 
 ### Backend (Java + Spring Boot)
 
-#### 1. Nomenclatura
-- **Clases entidad**: `Gasto`, `Ingreso`, `Usuario` (sustantivos, singular)
-- **Servicios**: `GastoService`, `IngresoService` (sufijo `Service`)
-- **Repositorios**: `GastoRepository` (sufijo `Repository`)
-- **Controladores**: `GastoController` (sufijo `Controller`)
-- **Variables booleanas**: `esFijo`, `esRecurrente`, `tieneAlerta` (prefijo `es`, `tiene`)
-- **Métodos privados**: `calcularTotalMensual()` (verbo + sustantivo)
+#### 1. Naming Conventions
+- **Entity classes**: `Expense`, `Income`, `User` (nouns, singular)
+- **Services**: `ExpenseService`, `IncomeService` (suffix `Service`)
+- **Repositories**: `ExpenseRepository` (suffix `Repository`)
+- **Controllers**: `ExpenseController` (suffix `Controller`)
+- **Boolean variables**: `isFixed`, `isRecurring`, `hasAlert` (prefix `is`, `has`)
+- **Private methods**: `calculateMonthlyTotal()` (verb + noun)
 
-#### 2. Estructura de Clases
+#### 2. Class Structure
 ```java
 @Entity
-@Table(name = "gastos")
-public class Gasto {
-    // 1. Atributos privados
+@Table(name = "expenses")
+public class Expense {
+    // 1. Private attributes
     @Id
     private Long id;
-    private BigDecimal cantidad;
+    private BigDecimal amount;
 
-    // 2. Constructor con parámetros obligatorios
-    public Gasto(String descripcion, BigDecimal cantidad, Categoria categoria) { }
+    // 2. Constructor with mandatory parameters
+    public Expense(String description, BigDecimal amount, Category category) { }
 
     // 3. Getters/Setters
-    public BigDecimal getCantidad() { }
+    public BigDecimal getAmount() { }
 
-    // 4. Métodos de lógica de negocio
-    public boolean esRecurrente() { }
+    // 4. Business logic methods
+    public boolean isRecurring() { }
 }
 ```
 
-#### 3. Servicios
+#### 3. Services
 ```java
 @Service
-public class GastoService {
-    private final GastoRepository gastoRepository;
-    private final ValidadorGasto validador;
+public class ExpenseService {
+    private final ExpenseRepository expenseRepository;
+    private final ExpenseValidator validator;
 
-    // Constructor para inyección
-    public GastoService(GastoRepository repo, ValidadorGasto validador) {
-        this.gastoRepository = repo;
-        this.validador = validador;
+    // Constructor for injection
+    public ExpenseService(ExpenseRepository repo, ExpenseValidator validator) {
+        this.expenseRepository = repo;
+        this.validator = validator;
     }
 
-    public Gasto crear(CrearGastoDTO dto) {
-        // 1. Validar
-        validador.validar(dto);
-        // 2. Convertir DTO → Entidad
-        Gasto gasto = dto.aGasto();
-        // 3. Ejecutar lógica
-        gasto.asignarCategoriaAutomatica();
-        // 4. Persistir
-        return gastoRepository.save(gasto);
+    public Expense create(CreateExpenseDTO dto) {
+        // 1. Validate
+        validator.validate(dto);
+        // 2. Convert DTO → Entity
+        Expense expense = dto.toExpense();
+        // 3. Execute logic
+        expense.assignCategoryAutomatically();
+        // 4. Persist
+        return expenseRepository.save(expense);
     }
 }
 ```
 
-#### 4. Controladores
+#### 4. Controllers
 ```java
 @RestController
-@RequestMapping("/api/gastos")
-public class GastoController {
-    private final GastoService gastoService;
+@RequestMapping("/api/expenses")
+public class ExpenseController {
+    private final ExpenseService expenseService;
 
     @PostMapping
-    public ResponseEntity<GastoResponseDTO> crear(@Valid @RequestBody CrearGastoDTO dto) {
-        Gasto gasto = gastoService.crear(dto);
+    public ResponseEntity<ExpenseResponseDTO> create(@Valid @RequestBody CreateExpenseDTO dto) {
+        Expense expense = expenseService.create(dto);
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(GastoResponseDTO.de(gasto));
+            .body(ExpenseResponseDTO.from(expense));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<GastoResponseDTO> obtener(@PathVariable Long id) {
-        return gastoService.obtenerPorId(id)
-            .map(g -> ResponseEntity.ok(GastoResponseDTO.de(g)))
+    public ResponseEntity<ExpenseResponseDTO> getById(@PathVariable Long id) {
+        return expenseService.getById(id)
+            .map(e -> ResponseEntity.ok(ExpenseResponseDTO.from(e)))
             .orElse(ResponseEntity.notFound().build());
     }
 }
 ```
 
 #### 5. DTOs (Data Transfer Objects)
-- Usar para **entrada**: `@Valid`, validaciones JSR-380
-- Usar para **salida**: Conversión desde entidades
+- Use for **input**: `@Valid`, JSR-380 validation
+- Use for **output**: Conversion from entities
 ```java
-public record CrearGastoDTO(
-    @NotBlank(message = "Descripción requerida")
-    String descripcion,
+public record CreateExpenseDTO(
+    @NotBlank(message = "Description required")
+    String description,
 
-    @Positive(message = "Cantidad debe ser positiva")
-    BigDecimal cantidad,
+    @Positive(message = "Amount must be positive")
+    BigDecimal amount,
 
     @NotNull
-    Categoria categoria
+    Category category
 ) { }
 
-public record GastoResponseDTO(
+public record ExpenseResponseDTO(
     Long id,
-    String descripcion,
-    BigDecimal cantidad
+    String description,
+    BigDecimal amount
 ) {
-    public static GastoResponseDTO de(Gasto gasto) {
-        return new GastoResponseDTO(gasto.getId(), gasto.getDescripcion(), gasto.getCantidad());
+    public static ExpenseResponseDTO from(Expense expense) {
+        return new ExpenseResponseDTO(expense.getId(), expense.getDescription(), expense.getAmount());
     }
 }
 ```
 
-#### 6. Validaciones
-- Validación de entrada en DTOs con `@NotNull`, `@Positive`, etc.
-- Excepciones personalizadas:
+#### 6. Validation
+- Input validation in DTOs with `@NotNull`, `@Positive`, etc.
+- Custom exceptions:
 ```java
-public class GastoInvalidoException extends RuntimeException {
-    public GastoInvalidoException(String mensaje) {
-        super(mensaje);
+public class InvalidExpenseException extends RuntimeException {
+    public InvalidExpenseException(String message) {
+        super(message);
     }
 }
 ```
 
-#### 7. Transacciones
+#### 7. Transactions
 ```java
-@Transactional  // Para operaciones que modifican múltiples entidades
-public void transferirGasto(Long idOrigen, Long idDestino) {
-    Gasto origen = gastoRepository.findById(idOrigen).orElseThrow();
-    Gasto destino = gastoRepository.findById(idDestino).orElseThrow();
-    // operaciones...
+@Transactional  // For operations that modify multiple entities
+public void transferExpense(Long sourceId, Long targetId) {
+    Expense source = expenseRepository.findById(sourceId).orElseThrow();
+    Expense target = expenseRepository.findById(targetId).orElseThrow();
+    // operations...
 }
 ```
 
 ### Frontend (Thymeleaf + Tailwind)
 
-#### 1. Nomenclatura
-- **Plantillas**: `gasto-list.html`, `ingreso-detail.html` (kebab-case)
-- **Variables Thymeleaf**: `th:text="${gasto.descripcion}"` (camelCase)
-- **Clases CSS**: `bg-blue-600`, `text-danger`, `btn-primary` (Tailwind)
+#### 1. Naming Conventions
+- **Templates**: `expense-list.html`, `income-detail.html` (kebab-case)
+- **Thymeleaf variables**: `th:text="${expense.description}"` (camelCase)
+- **CSS classes**: `bg-blue-600`, `text-danger`, `btn-primary` (Tailwind)
 
-#### 2. Estructura
+#### 2. Structure
 ```html
-<!-- gasto-list.html -->
+<!-- expense-list.html -->
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
-    <title>Gastos - Kakebo</title>
+    <title>Expenses - Kakebo</title>
     <link rel="stylesheet" th:href="@{/css/tailwind.min.css}">
 </head>
 <body class="bg-gray-50">
     <div class="container mx-auto p-4">
-        <!-- Header mínimalista -->
-        <h1 class="text-3xl font-bold mb-6">Mis Gastos</h1>
+        <!-- Minimalist header -->
+        <h1 class="text-3xl font-bold mb-6">My Expenses</h1>
 
-        <!-- Iteración segura con Thymeleaf -->
-        <div th:if="${gastos.isEmpty()}" class="text-gray-500">
-            No hay gastos registrados.
+        <!-- Safe iteration with Thymeleaf -->
+        <div th:if="${expenses.isEmpty()}" class="text-gray-500">
+            No expenses registered.
         </div>
         <ul class="space-y-2">
-            <li th:each="gasto : ${gastos}" class="p-4 border-l-4 border-blue-600">
-                <span th:text="${gasto.descripcion}"></span>
-                <span class="text-gray-500" th:text="'$' + ${gasto.cantidad}"></span>
+            <li th:each="expense : ${expenses}" class="p-4 border-l-4 border-blue-600">
+                <span th:text="${expense.description}"></span>
+                <span class="text-gray-500" th:text="'$' + ${expense.amount}"></span>
             </li>
         </ul>
     </div>
@@ -210,24 +210,24 @@ public void transferirGasto(Long idOrigen, Long idDestino) {
 </html>
 ```
 
-#### 3. Formularios
+#### 3. Forms
 ```html
-<form th:action="@{/gastos}" th:object="${gastoForm}" method="POST" class="space-y-4">
+<form th:action="@{/expenses}" th:object="${expenseForm}" method="POST" class="space-y-4">
     <div>
-        <label for="descripcion" class="block font-semibold">Descripción</label>
-        <input type="text" id="descripcion" th:field="*{descripcion}"
+        <label for="description" class="block font-semibold">Description</label>
+        <input type="text" id="description" th:field="*{description}"
                class="w-full p-2 border rounded-lg"
-               th:classappend="${#fields.hasErrors('descripcion') ? 'border-red-500' : ''}">
-        <span th:if="${#fields.hasErrors('descripcion')}"
-              th:errors="*{descripcion}" class="text-red-500 text-sm"></span>
+               th:classappend="${#fields.hasErrors('description') ? 'border-red-500' : ''}">
+        <span th:if="${#fields.hasErrors('description')}"
+              th:errors="*{description}" class="text-red-500 text-sm"></span>
     </div>
 </form>
 ```
 
-#### 4. Estilos Minimalistas (Tailwind)
-- Colores limitados: azul (`blue-600`), gris (`gray-50`), rojo para errores
-- Padding/Margin consistente: `p-2`, `p-4`, `mb-4`
-- Breakpoints responsive: `md:`, `lg:` para mobile-first
+#### 4. Minimalist Styles (Tailwind)
+- Limited colors: blue (`blue-600`), gray (`gray-50`), red for errors
+- Consistent padding/margin: `p-2`, `p-4`, `mb-4`
+- Responsive breakpoints: `md:`, `lg:` for mobile-first
 
 ---
 
@@ -236,33 +236,33 @@ public void transferirGasto(Long idOrigen, Long idDestino) {
 ### Unit Tests (JUnit 5 + Mockito)
 ```java
 @ExtendWith(MockitoExtension.class)
-class GastoServiceTest {
+class ExpenseServiceTest {
     @Mock
-    private GastoRepository gastoRepository;
+    private ExpenseRepository expenseRepository;
 
     @InjectMocks
-    private GastoService gastoService;
+    private ExpenseService expenseService;
 
     @Test
-    void crearGastoValido() {
+    void createValidExpense() {
         // Arrange
-        CrearGastoDTO dto = new CrearGastoDTO("Comida", new BigDecimal("25.50"), Categoria.SUPERVIVENCIA);
-        Gasto gastoEsperado = dto.aGasto();
-        when(gastoRepository.save(any())).thenReturn(gastoEsperado);
+        CreateExpenseDTO dto = new CreateExpenseDTO("Food", new BigDecimal("25.50"), Category.SURVIVAL);
+        Expense expectedExpense = dto.toExpense();
+        when(expenseRepository.save(any())).thenReturn(expectedExpense);
 
         // Act
-        Gasto resultado = gastoService.crear(dto);
+        Expense result = expenseService.create(dto);
 
         // Assert
-        assertEquals("Comida", resultado.getDescripcion());
-        verify(gastoRepository, times(1)).save(any());
+        assertEquals("Food", result.getDescription());
+        verify(expenseRepository, times(1)).save(any());
     }
 
     @Test
-    void crearGastoConCantidadNegativaLanzaExcepcion() {
-        CrearGastoDTO dto = new CrearGastoDTO("Comida", new BigDecimal("-10"), Categoria.SUPERVIVENCIA);
+    void createExpenseWithNegativeAmountThrowsException() {
+        CreateExpenseDTO dto = new CreateExpenseDTO("Food", new BigDecimal("-10"), Category.SURVIVAL);
 
-        assertThrows(GastoInvalidoException.class, () -> gastoService.crear(dto));
+        assertThrows(InvalidExpenseException.class, () -> expenseService.create(dto));
     }
 }
 ```
@@ -271,13 +271,13 @@ class GastoServiceTest {
 ```java
 @SpringBootTest
 @AutoConfigureMockMvc
-class GastoControllerIntegrationTest {
+class ExpenseControllerIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
     @Test
-    void obtenerGastosDevuelve200() throws Exception {
-        mockMvc.perform(get("/api/gastos"))
+    void getExpensesReturns200() throws Exception {
+        mockMvc.perform(get("/api/expenses"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$").isArray());
     }
@@ -286,51 +286,52 @@ class GastoControllerIntegrationTest {
 
 ---
 
-## Estándares de Código
+## Code Standards
 
 ### Commits
 ```
-[FEAT] Agregar validación de cantidad negativa
-[FIX] Corregir cálculo de ahorro mensual
-[REFACTOR] Extraer lógica de validación a servicio
-[TEST] Aumentar cobertura de GastoService a 95%
-[DOCS] Documentar endpoint POST /gastos
+[FEAT] Add validation for negative amount
+[FIX] Fix monthly savings calculation
+[REFACTOR] Extract validation logic to service
+[TEST] Increase ExpenseService coverage to 95%
+[DOCS] Document POST /expenses endpoint
 ```
 
-### Archivos
-- **Una clase por archivo** (excepto Records pequeños)
-- **Máximo 200 líneas por clase** (refactorizar si supera)
-- **Máximo 20 parámetros por método** (usar DTO si supera)
+### Files
+- **One class per file** (except small Records)
+- **Maximum 200 lines per class** (refactor if exceeding)
+- **Maximum 20 parameters per method** (use DTO if exceeding)
 
-### Documentación
+### Documentation
 ```java
 /**
- * Calcula el total de gastos para una categoría en el mes actual.
+ * Calculates the total expenses for a category in the current month.
  *
- * @param categoria la categoría a filtrar
- * @return el total en BigDecimal
- * @throws CategoriaNulaException si la categoría es null
+ * @param category the category to filter
+ * @return the total in BigDecimal
+ * @throws CategoryNullException if category is null
  */
-public BigDecimal obtenerTotalPorCategoria(Categoria categoria) {
+public BigDecimal getTotalByCategory(Category category) {
     // ...
 }
 ```
 
 ---
 
-## Flujo de Desarrollo
+## Development Workflow
 
-1. **Branch**: `feature/nombre-corto` o `fix/descripcion`
-2. **Código**: Cumplir SOLID, pasar linting, cobertura ≥ 80%
+1. **Branch**: `feature/short-name` or `fix/description`
+2. **Code**: Comply with SOLID, pass linting, coverage ≥ 80%
 3. **Test**: Unit + Integration tests
-4. **Commit**: Mensaje claro con prefijo
-5. **Pull Request**: Descripción, enlace a issue, pasar CI/CD
+4. **Commit**: Clear message with prefix
+5. **Pull Request**: Description, issue link, pass CI/CD
 
 ---
 
-## Recursos Clave
+## Key Resources
 
-- **Especificación**: `SPEC.md` - Requisitos funcionales
-- **Arquitectura**: `ARCHITECTURE.md` - Stack y decisiones técnicas
-- **Documentación Spring**: https://spring.io/projects/spring-boot
+- **Specification**: `SPEC.md` - Functional requirements
+- **Architecture**: `ARCHITECTURE.md` - Stack and technical decisions
+- **Agent Guidelines**: `AGENTS.md` - AI agent reference
+- **Spring Boot Documentation**: https://spring.io/projects/spring-boot
 - **Tailwind CSS**: https://tailwindcss.com/docs

@@ -2,27 +2,27 @@
 
 ## Stack
 
-- Java 25
-- Spring boot compatible con Java 25
-- Api first
-- Base de datos embebida
-- maven
+- Java 21
+- Spring Boot compatible with Java 21
+- API first
+- Embedded database
+- Maven
 
 ## Backend
 
-- genera una api rest para interactuar con la aplicación
-- Los gastos/ingresos deben tener la opción de ser recurrentes o no
-- la api debe mostrar gastos e ingresos y poder crear, borrar y actualizar los gastos
+- Generates a REST API to interact with the application
+- Expenses/income must have the option to be recurring or not
+- The API must show expenses and income and be able to create, delete and update expenses
 
 ## Frontend
 
-- usar Thymeleaf + tailwind
-- Thymeleaf debe consumir la api rest
-- los estilos deben ser minimalistas
-- maven por familiaridad
+- Use Thymeleaf + Tailwind
+- Thymeleaf must consume the REST API
+- Styles must be minimalist
+- Maven for familiarity
 
-## Decisiones
+## Decisions
 
-- Thymeleaf + tailwind para facilitar la creación del frontend
-- Rest api para poder cambiar a otro frontend en el futuro
-- Base de datos embebida por temas de sencillez
+- Thymeleaf + Tailwind to facilitate frontend creation
+- REST API to be able to change to another frontend in the future
+- Embedded database for simplicity reasons
