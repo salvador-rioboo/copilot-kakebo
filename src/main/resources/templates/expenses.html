@@ -19,12 +19,22 @@
     </nav>
 
     <div class="container mx-auto p-4">
+        <!-- Success Message -->
+        <div id="successMessage" class="hidden mb-4 p-4 bg-green-50 border border-green-600 text-green-700 rounded-lg">
+            <p id="successText"></p>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="hidden mb-4 p-4 bg-red-50 border border-red-600 text-red-700 rounded-lg">
+            <p id="errorText"></p>
+        </div>
+
         <h2 class="text-3xl font-bold mb-6">Expenses</h2>
 
         <!-- Add Expense Form -->
         <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
             <h3 class="text-xl font-bold mb-4">Add New Expense</h3>
-            <form id="expenseForm" action="/api/expenses" method="POST" class="space-y-4">
+            <form id="expenseForm" class="space-y-4">
                 <div>
                     <label for="description" class="block font-semibold mb-2">Description <span class="text-red-600">*</span></label>
                     <input type="text" id="description" name="description" minlength="3" maxlength="100" required
@@ -83,32 +93,15 @@
 
         <!-- Expenses List -->
         <div class="bg-white rounded-lg shadow-lg p-6">
-            <h3 class="text-xl font-bold mb-4">Recent Expenses</h3>
-            <div class="space-y-3">
-                <div class="flex justify-between items-center p-4 border-l-4 border-blue-600 bg-gray-50">
-                    <div>
-                        <p class="font-semibold">Groceries</p>
-                        <p class="text-sm text-gray-500">Survival - 2026-04-29</p>
-                    </div>
-                    <span class="text-red-600 font-bold">$125.50</span>
-                </div>
+            <h3 class="text-xl font-bold mb-4">Recent Expenses <span id="expenseCount" class="text-gray-500 text-sm font-normal"></span></h3>
 
-                <div class="flex justify-between items-center p-4 border-l-4 border-green-600 bg-gray-50">
-                    <div>
-                        <p class="font-semibold">Movie Tickets</p>
-                        <p class="text-sm text-gray-500">Entertainment - 2026-04-28</p>
-                    </div>
-                    <span class="text-red-600 font-bold">$30.00</span>
-                </div>
-
-                <div class="flex justify-between items-center p-4 border-l-4 border-purple-600 bg-gray-50">
-                    <div>
-                        <p class="font-semibold">Online Course</p>
-                        <p class="text-sm text-gray-500">Culture - 2026-04-27</p>
-                    </div>
-                    <span class="text-red-600 font-bold">$99.99</span>
-                </div>
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden text-center py-8 text-gray-500">
+                <p>No expense records found. Add your first expense to get started!</p>
             </div>
+
+            <!-- Dynamic Expense List -->
+            <div id="expenseList" class="space-y-3"></div>
         </div>
 
         <div class="mt-6">
@@ -118,110 +111,7 @@
         </div>
     </div>
 
-    <script>
-        // Form validation for expenses
-        const form = document.getElementById('expenseForm');
-        const descriptionInput = document.getElementById('description');
-        const amountInput = document.getElementById('amount');
-        const categoryInput = document.getElementById('category');
-        const dateInput = document.getElementById('date');
-        const submitBtn = document.getElementById('submitBtn');
-
-        // Validation rules
-        const validations = {
-            description: (value) => {
-                const trimmed = value.trim();
-                if (!trimmed) return 'Description is required';
-                if (trimmed.length < 3) return 'Description must be at least 3 characters';
-                if (trimmed.length > 100) return 'Description must not exceed 100 characters';
-                return null;
-            },
-            amount: (value) => {
-                const num = parseFloat(value);
-                if (!value) return 'Amount is required';
-                if (isNaN(num)) return 'Amount must be a valid number';
-                if (num <= 0) return 'Amount must be greater than 0';
-                return null;
-            },
-            category: (value) => {
-                if (!value) return 'Category is required';
-                return null;
-            },
-            date: (value) => {
-                if (!value) return 'Date is required';
-                const selectedDate = new Date(value);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                if (selectedDate > today) return 'Date cannot be in the future';
-                const oneYearAgo = new Date();
-                oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-                if (selectedDate < oneYearAgo) return 'Date cannot be more than 1 year in the past';
-                return null;
-            }
-        };
-
-        // Function to show error
-        function showError(fieldName, error) {
-            const errorEl = document.getElementById(fieldName + 'Error');
-            const inputEl = document.getElementById(fieldName);
-            if (error) {
-                errorEl.textContent = error;
-                errorEl.classList.remove('hidden');
-                inputEl.classList.add('border-red-600');
-                inputEl.classList.remove('border-gray-300');
-            } else {
-                errorEl.classList.add('hidden');
-                inputEl.classList.remove('border-red-600');
-                inputEl.classList.add('border-gray-300');
-            }
-        }
-
-        // Function to validate all fields
-        function validateForm() {
-            let isValid = true;
-            Object.keys(validations).forEach(fieldName => {
-                const input = document.getElementById(fieldName);
-                const error = validations[fieldName](input.value);
-                showError(fieldName, error);
-                if (error) isValid = false;
-            });
-            submitBtn.disabled = !isValid;
-            return isValid;
-        }
-
-        // Real-time validation
-        descriptionInput.addEventListener('blur', () => {
-            showError('description', validations.description(descriptionInput.value));
-            validateForm();
-        });
-
-        amountInput.addEventListener('blur', () => {
-            showError('amount', validations.amount(amountInput.value));
-            validateForm();
-        });
-
-        categoryInput.addEventListener('change', () => {
-            showError('category', validations.category(categoryInput.value));
-            validateForm();
-        });
-
-        dateInput.addEventListener('blur', () => {
-            showError('date', validations.date(dateInput.value));
-            validateForm();
-        });
-
-        // Form submit
-        form.addEventListener('submit', (e) => {
-            if (!validateForm()) {
-                e.preventDefault();
-                alert('Please fix the errors before submitting');
-            }
-        });
-
-        // Set today's date as default
-        const today = new Date().toISOString().split('T')[0];
-        dateInput.value = today;
-        dateInput.max = today;
-    </script>
+    <!-- Load Expense Management Module -->
+    <script th:src="@{/js/expenses.js}"></script>
 </body>
 </html>
